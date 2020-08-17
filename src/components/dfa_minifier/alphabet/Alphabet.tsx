@@ -1,31 +1,21 @@
 import React, { Component, ChangeEvent } from "react"
 
-interface AlphabetProps { }
-interface AlphabetState {
+interface AlphabetProps {
     alphabet: string
+    onChange: (event: ChangeEvent<HTMLInputElement>) => void
+ }
+interface AlphabetState {
 }
 
 class Alphabet extends Component<AlphabetProps, AlphabetState> {
-    constructor(props: AlphabetProps) {
-        super(props)
-        this.state = {
-            alphabet: ""
-        }
-        this.onAlphabetChange = this.onAlphabetChange.bind(this);
-    }
-    onAlphabetChange(event: ChangeEvent<HTMLInputElement>) {
-        const inputValue = Array.from(new Set(event.target.value)).filter((value) => { return value.match(/[a-z 0-9]/gi) }).join("");
-        this.setState({
-            alphabet: inputValue
-        })
-    }
+    
     render() {
-        const { alphabet } = this.state;
+        const { alphabet, onChange } = this.props;
         return (
             <div>
                 <label>
                     Alfabeto:
-                    <input id="alphabet" name="alphabet" type="text" onChange={this.onAlphabetChange} value={alphabet} />
+                    <input id="alphabet" name="alphabet" type="text" onChange={onChange} value={alphabet} />
                 </label>
             </div>
         )
