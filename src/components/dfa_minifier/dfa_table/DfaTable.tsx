@@ -1,15 +1,21 @@
-import React, { Component, MouseEvent } from "react"
+// Global Imports
+import React, { ChangeEvent, Component, MouseEvent } from "react"
+// Local Imports
+import Estado from "../../../models/Estado";
 
 interface DfaTableProps {
     alphabet: string
-    states: Array<number>
+    states: Array<Estado>
     onStateAdd: (event: MouseEvent<HTMLButtonElement>) => void
-    onStateRemove: (state: number) => (event: MouseEvent<HTMLButtonElement>) => void
+    onStateRemove: (state: Estado) => (event: MouseEvent<HTMLButtonElement>) => void
+    onStateInicialChange: (state: Estado) => (event: ChangeEvent<HTMLInputElement>) => void
+    onStateFinalChange: (state: Estado) => (event: ChangeEvent<HTMLInputElement>) => void
+    onStateOperacaoChange: (state: Estado, character: string) => (event: ChangeEvent<HTMLSelectElement>) => void
 }
 
 class DfaTable extends Component<DfaTableProps> {
     render() {
-        const { alphabet, states, onStateAdd, onStateRemove } = this.props;
+        const { alphabet, states, onStateAdd, onStateRemove, onStateOperacaoChange, onStateFinalChange, onStateInicialChange } = this.props;
         return (
             <table>
                 <thead>
@@ -27,15 +33,15 @@ class DfaTable extends Component<DfaTableProps> {
                     {states.map((state, index) => {
                         return (
                             <tr key={index}>
-                                <td >Estado {state}</td>
-                                {alphabet.split("").map((_, index) => {
+                                <td >Estado {state.id}</td>
+                                {alphabet.split("").map((character, index) => {
                                     return <td key={index}>
-                                        <select >
-                                            <option>-</option>
+                                        <select onChange={onStateOperacaoChange(state, character)}>
+                                            <option key={0} value={-1}>-</option>
                                             {states.map((opt_state, index) => {
                                                 return (
-                                                    <option key={index}>
-                                                        Estado {opt_state}
+                                                    <option key={index + 1} value={opt_state.id}>
+                                                        Estado {opt_state.id}
                                                     </option>
                                                 )
                                             })}
@@ -43,10 +49,10 @@ class DfaTable extends Component<DfaTableProps> {
                                     </td>
                                 })}
                                 <td>
-                                    <input type="radio" name="inicial" />
+                                    <input type="radio" name="inicial" onChange={onStateInicialChange(state)} />
                                 </td>
                                 <td>
-                                    <input type="checkbox" />
+                                    <input type="checkbox" onChange={onStateFinalChange(state)} />
                                 </td>
                                 <td>
                                     <button onClick={onStateRemove(state)}>X</button>
@@ -54,14 +60,14 @@ class DfaTable extends Component<DfaTableProps> {
                             </tr>
                         )
                     })}
-                    <tfoot>
-                        <tr>
-                            <td>
-                                <button onClick={onStateAdd}>Add</button>
-                            </td>
-                        </tr>
-                    </tfoot>
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <td>
+                            <button onClick={onStateAdd}>Add</button>
+                        </td>
+                    </tr>
+                </tfoot>
             </table>
         )
     }
