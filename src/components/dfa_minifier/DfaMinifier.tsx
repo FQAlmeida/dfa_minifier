@@ -2,13 +2,33 @@
 import React, { Component, ChangeEvent, MouseEvent, Suspense, lazy } from "react"
 
 // Local Imports
-import Estado from "../../models/Estado";
+import IEstado, { IOperacao } from "../../models/Estado";
 const Alphabet = lazy(() => import("./alphabet/Alphabet"))
 const DfaTable = lazy(() => import("./dfa_table/DfaTable"));
 
+const initial_state: DfaMinifierState = {
+    alphabet: "ab",
+    states: [{
+        id: 0,
+        inicial: false,
+        final: false,
+        operacoes: [
+            {
+                character: "a",
+                next_state_id: -1,
+            },
+            {
+                character: "b",
+                next_state_id: -1
+            },
+        ],
+    }],
+    nextState: 1
+}
+
 interface DfaMinifierState {
     alphabet: string
-    states: Array<Estado>
+    states: Array<IEstado>
     nextState: number
 }
 interface DfaMinifierProps { }
@@ -17,15 +37,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
 
     constructor(props: DfaMinifierProps) {
         super(props)
-        // TODO: Add initial empty operations
-        const initial_states = [new Estado(0, false, false)]
-        const initial_alphabet = "ab"
-        const initial_next_state = 1
-        this.state = {
-            alphabet: initial_alphabet,
-            states: initial_states,
-            nextState: initial_next_state
-        }
+        this.state = initial_state
         this.onAlphabetChange = this.onAlphabetChange.bind(this);
         this.onStateAdd = this.onStateAdd.bind(this);
         this.onStateRemove = this.onStateRemove.bind(this);
@@ -35,12 +47,50 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
     }
     onAlphabetChange(event: ChangeEvent<HTMLInputElement>) {
         // TODO: Add initial empty operations to states
-        const inputValue = Array.from(new Set(event.target.value)).filter((value) => { return value.match(/[a-z 0-9]/gi) }).join("");
+        const { alphabet, states } = this.state;
+        const inputValue = Array.from(new Set(event.target.value)).filter((value) => { return value.match(/[a-z 0-9]/gi) });
+        // Para cada estado, para cada operacao interna, para cada letra no alfabeto
+        // Verificar se letra do alfabeto está contida nos estados
+        // Se sim, atualizar, 
+        // Se não, adicionar
+        // Verificar se letra de operacoes estão contidas no alfabeto
+        let updated_states: Array<IEstado>;
+        if (alphabet.length > inputValue.length) {
+            const removed_character = alphabet.split("").find(character => !inputValue.includes(character))
+            updated_states = [
+                ...states.map(state => {
+                    return {
+                        ...state,
+                        operacoes: [
+                            ...state.operacoes.filter(operacao => removed_character === undefined || operacao.character !== removed_character)
+                        ]
+                    }
+                })
+            ]
+        } else {
+            const added_character = inputValue.find(character => !alphabet.includes(character))
+            if (added_character) {
+                updated_states = [
+                    ...states.map(state => {
+                        return {
+                            ...state,
+                            operacoes: [
+                                ...state.operacoes,
+                                { character: added_character, next_state_id: -1 }
+                            ]
+                        }
+                    })
+                ]
+            } else {
+                updated_states = states
+            }
+        }
         this.setState({
-            alphabet: inputValue
+            alphabet: inputValue.join(""),
+            states: updated_states
         })
     }
-    onStateRemove(state_removed: Estado) {
+    onStateRemove(state_removed: IEstado) {
         return (event: MouseEvent<HTMLButtonElement>) => {
             event.preventDefault();
             this.setState(state => {
@@ -53,32 +103,72 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
 
     }
     onStateAdd(event: MouseEvent<HTMLButtonElement>) {
-        // TODO: Add initial empty operations
         event.preventDefault();
-
+        const { alphabet } = this.state
+        const operacoes: Array<IOperacao> = alphabet.split("").map(character => {
+            return {
+                character,
+                next_state_id: -1
+            }
+        })
         this.setState(state => {
             return {
                 nextState: state.nextState + 1,
-                states: [...state.states, new Estado(state.nextState, false, false)]
+                states: [...state.states, {
+                    id: state.nextState,
+                    inicial: false,
+                    final: false,
+                    operacoes
+                }]
             }
         })
     }
 
-    onStateInicialChange(estado: Estado) {
+    onStateInicialChange(estado: IEstado) {
         return (event: ChangeEvent<HTMLInputElement>) => {
-            estado.inicial = event.target.value ? true : false;
+            const value = event.target.value;
+            this.setState(state => {
+                return {
+                    ...state,
+                    states: [
+                        ...state.states.filter(inner_state => inner_state.id !== estado.id),
+                        { ...estado, inicial: value ? true : false }
+                    ]
+                }
+            })
+        }
+    }
+    onStateFinalChange(estado: IEstado) {
+        return (event: ChangeEvent<HTMLInputElement>) => {
+            const value = event.target.value;
+            this.setState(state => {
+                return {
+                    ...state,
+                    states: [
+                        ...state.states.filter(inner_state => inner_state.id !== estado.id),
+                        { ...estado, final: value ? true : false }
+                    ]
+                }
+            })
         }
 
     }
-    onStateFinalChange(estado: Estado) {
-        return (event: ChangeEvent<HTMLInputElement>) => {
-            estado.final = event.target.value ? true : false;
-        }
-
-    }
-    onStateOperacaoChange(estado: Estado, character: string) {
+    onStateOperacaoChange(estado: IEstado, character: string) {
         return (event: ChangeEvent<HTMLSelectElement>) => {
-            estado.alter_operacao({character, next_state_id: parseInt(event.target.value)})
+            const value = event.target.value;
+            const operacoes: Array<IOperacao> = [
+                ...estado.operacoes.filter(oper => oper.character !== character),
+                { character, next_state_id: parseInt(value) }
+            ]
+            this.setState(state => {
+                return {
+                    ...state,
+                    states: [
+                        ...state.states.filter(inner_state => inner_state.id !== estado.id),
+                        { ...estado, operacoes }
+                    ]
+                }
+            })
         }
 
     }

@@ -9,9 +9,9 @@ class Base extends Component {
                         dfa minifier
                     </p>
                 </header>
-                <div id="content">
+                <section id="content">
                     {this.props.children}
-                </div>
+                </section>
             </Fragment>
         )
     }
