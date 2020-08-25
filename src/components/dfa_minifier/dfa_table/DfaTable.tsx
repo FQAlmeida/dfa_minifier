@@ -1,5 +1,11 @@
 // Global Imports
 import React, { ChangeEvent, Component, MouseEvent } from "react"
+import Button from "react-bootstrap/Button"
+import Table from "react-bootstrap/Table"
+import InputGroup from "react-bootstrap/InputGroup"
+import FormControl from "react-bootstrap/FormControl"
+import FormCheck from "react-bootstrap/FormCheck"
+import { FcCancel, FcPlus } from "react-icons/fc"
 // Local Imports
 import Estado from "../../../models/Estado";
 
@@ -17,7 +23,7 @@ class DfaTable extends Component<DfaTableProps> {
     render() {
         const { alphabet, states, onStateAdd, onStateRemove, onStateOperacaoChange, onStateFinalChange, onStateInicialChange } = this.props;
         return (
-            <table>
+            <Table striped bordered responsive >
                 <thead>
                     <tr>
                         <th>Estados</th>
@@ -36,26 +42,32 @@ class DfaTable extends Component<DfaTableProps> {
                                 <td >Estado {state.id}</td>
                                 {alphabet.split("").map((character, index) => {
                                     return <td key={index}>
-                                        <select onChange={onStateOperacaoChange(state, character)}>
-                                            <option key={0} value={-1}>-</option>
-                                            {states.map((opt_state, index) => {
-                                                return (
-                                                    <option key={index + 1} value={opt_state.id}>
-                                                        Estado {opt_state.id}
-                                                    </option>
-                                                )
-                                            })}
-                                        </select>
+                                        <InputGroup>
+                                            <FormControl onChange={onStateOperacaoChange(state, character)} as="select">
+                                                <option key={0} value={-1}>-</option>
+                                                {states.map((opt_state, index) => {
+                                                    return (
+                                                        <option key={index + 1} value={opt_state.id}>
+                                                            Estado {opt_state.id}
+                                                        </option>
+                                                    )
+                                                })}
+                                            </FormControl>
+                                        </InputGroup>
                                     </td>
                                 })}
                                 <td>
-                                    <input type="radio" name="inicial" onChange={onStateInicialChange(state)} />
+                                    <InputGroup>
+                                        <FormCheck type="radio" name="inicial" aria-label="check-inicial" onChange={onStateInicialChange(state)} />
+                                    </InputGroup>
                                 </td>
                                 <td>
-                                    <input type="checkbox" onChange={onStateFinalChange(state)} />
+                                    <InputGroup>
+                                        <FormCheck type="checkbox" aria-label="check-final" onChange={onStateFinalChange(state)} />
+                                    </InputGroup>
                                 </td>
                                 <td>
-                                    <button onClick={onStateRemove(state)}>X</button>
+                                    <Button variant="outline-danger" onClick={onStateRemove(state)}><FcCancel /></Button>
                                 </td>
                             </tr>
                         )
@@ -63,12 +75,12 @@ class DfaTable extends Component<DfaTableProps> {
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td>
-                            <button onClick={onStateAdd}>Add</button>
+                        <td colSpan={alphabet.length + 4}>
+                            <Button variant="outline-success" onClick={onStateAdd}><FcPlus /></Button>
                         </td>
                     </tr>
                 </tfoot>
-            </table>
+            </Table>
         )
     }
 }

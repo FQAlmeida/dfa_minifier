@@ -1,4 +1,5 @@
 import React, { Component, Fragment } from "react"
+import Container from "react-bootstrap/Container"
 
 class Base extends Component {
     render() {
@@ -10,7 +11,9 @@ class Base extends Component {
                     </p>
                 </header>
                 <section id="content">
-                    {this.props.children}
+                    <Container fluid>
+                        {this.props.children}
+                    </Container>
                 </section>
             </Fragment>
         )

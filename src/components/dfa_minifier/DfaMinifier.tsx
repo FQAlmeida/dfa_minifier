@@ -3,6 +3,7 @@ import React, { Component, ChangeEvent, MouseEvent, Suspense, lazy } from "react
 
 // Local Imports
 import IEstado, { IOperacao } from "../../models/Estado";
+const DfaResult = lazy(() => import("./dfa_result/DfaResult"));
 const Alphabet = lazy(() => import("./alphabet/Alphabet"))
 const DfaTable = lazy(() => import("./dfa_table/DfaTable"));
 
@@ -46,14 +47,8 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
         this.onStateOperacaoChange = this.onStateOperacaoChange.bind(this)
     }
     onAlphabetChange(event: ChangeEvent<HTMLInputElement>) {
-        // TODO: Add initial empty operations to states
         const { alphabet, states } = this.state;
         const inputValue = Array.from(new Set(event.target.value)).filter((value) => { return value.match(/[a-z 0-9]/gi) });
-        // Para cada estado, para cada operacao interna, para cada letra no alfabeto
-        // Verificar se letra do alfabeto está contida nos estados
-        // Se sim, atualizar, 
-        // Se não, adicionar
-        // Verificar se letra de operacoes estão contidas no alfabeto
         let updated_states: Array<IEstado>;
         if (alphabet.length > inputValue.length) {
             const removed_character = alphabet.split("").find(character => !inputValue.includes(character))
@@ -131,8 +126,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
                 return {
                     ...state,
                     states: [
-                        ...state.states.filter(inner_state => inner_state.id !== estado.id),
-                        { ...estado, inicial: value ? true : false }
+                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, inicial: value ? true : false }),
                     ]
                 }
             })
@@ -145,8 +139,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
                 return {
                     ...state,
                     states: [
-                        ...state.states.filter(inner_state => inner_state.id !== estado.id),
-                        { ...estado, final: value ? true : false }
+                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, final: value ? true : false }),
                     ]
                 }
             })
@@ -164,8 +157,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
                 return {
                     ...state,
                     states: [
-                        ...state.states.filter(inner_state => inner_state.id !== estado.id),
-                        { ...estado, operacoes }
+                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, operacoes }),
                     ]
                 }
             })
@@ -189,6 +181,9 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
                     onStateInicialChange={this.onStateInicialChange}
                     onStateFinalChange={this.onStateFinalChange}
                     onStateOperacaoChange={this.onStateOperacaoChange}
+                />
+                <DfaResult
+                    states={states}
                 />
             </Suspense>
         )

@@ -1,23 +1,26 @@
 import React, { Component, ChangeEvent } from "react"
+import InputGroup from "react-bootstrap/FormGroup"
+import FormControl from "react-bootstrap/FormControl"
+import FormLabel from "react-bootstrap/FormLabel"
 
 interface AlphabetProps {
     alphabet: string
     onChange: (event: ChangeEvent<HTMLInputElement>) => void
- }
-interface AlphabetState {
 }
 
+interface AlphabetState { }
+
 class Alphabet extends Component<AlphabetProps, AlphabetState> {
-    
+
     render() {
         const { alphabet, onChange } = this.props;
         return (
-            <div>
-                <label>
+            <InputGroup>
+                <FormLabel>
                     Alfabeto:
-                    <input id="alphabet" name="alphabet" type="text" onChange={onChange} value={alphabet} />
-                </label>
-            </div>
+                </FormLabel>
+                <FormControl id="alphabet" name="alphabet" type="text" onChange={onChange} value={alphabet} />
+            </InputGroup>
         )
     }
 }
