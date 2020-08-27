@@ -10,17 +10,17 @@ const DfaTable = lazy(() => import("./dfa_table/DfaTable"));
 const initial_state: DfaMinifierState = {
     alphabet: "ab",
     states: [{
-        id: 0,
+        id: "0",
         inicial: false,
         final: false,
         operacoes: [
             {
                 character: "a",
-                next_state_id: -1,
+                next_state_id: "",
             },
             {
                 character: "b",
-                next_state_id: -1
+                next_state_id: ""
             },
         ],
     }],
@@ -32,6 +32,7 @@ interface DfaMinifierState {
     states: Array<IEstado>
     nextState: number
 }
+
 interface DfaMinifierProps { }
 
 class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
@@ -71,7 +72,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
                             ...state,
                             operacoes: [
                                 ...state.operacoes,
-                                { character: added_character, next_state_id: -1 }
+                                { character: added_character, next_state_id: "" }
                             ]
                         }
                     })
@@ -103,14 +104,14 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
         const operacoes: Array<IOperacao> = alphabet.split("").map(character => {
             return {
                 character,
-                next_state_id: -1
+                next_state_id: ""
             }
         })
         this.setState(state => {
             return {
                 nextState: state.nextState + 1,
                 states: [...state.states, {
-                    id: state.nextState,
+                    id: (state.nextState).toString(),
                     inicial: false,
                     final: false,
                     operacoes
@@ -151,7 +152,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
             const value = event.target.value;
             const operacoes: Array<IOperacao> = [
                 ...estado.operacoes.filter(oper => oper.character !== character),
-                { character, next_state_id: parseInt(value) }
+                { character, next_state_id: value }
             ]
             this.setState(state => {
                 return {

@@ -7,16 +7,16 @@ import FormControl from "react-bootstrap/FormControl"
 import FormCheck from "react-bootstrap/FormCheck"
 import { FcCancel, FcPlus } from "react-icons/fc"
 // Local Imports
-import Estado from "../../../models/Estado";
+import IEstado from "../../../models/Estado";
 
 interface DfaTableProps {
     alphabet: string
-    states: Array<Estado>
+    states: Array<IEstado>
     onStateAdd: (event: MouseEvent<HTMLButtonElement>) => void
-    onStateRemove: (state: Estado) => (event: MouseEvent<HTMLButtonElement>) => void
-    onStateInicialChange: (state: Estado) => (event: ChangeEvent<HTMLInputElement>) => void
-    onStateFinalChange: (state: Estado) => (event: ChangeEvent<HTMLInputElement>) => void
-    onStateOperacaoChange: (state: Estado, character: string) => (event: ChangeEvent<HTMLSelectElement>) => void
+    onStateRemove: (state: IEstado) => (event: MouseEvent<HTMLButtonElement>) => void
+    onStateInicialChange: (state: IEstado) => (event: ChangeEvent<HTMLInputElement>) => void
+    onStateFinalChange: (state: IEstado) => (event: ChangeEvent<HTMLInputElement>) => void
+    onStateOperacaoChange: (state: IEstado, character: string) => (event: ChangeEvent<HTMLSelectElement>) => void
 }
 
 class DfaTable extends Component<DfaTableProps> {
@@ -44,7 +44,7 @@ class DfaTable extends Component<DfaTableProps> {
                                     return <td key={index}>
                                         <InputGroup>
                                             <FormControl onChange={onStateOperacaoChange(state, character)} as="select">
-                                                <option key={0} value={-1}>-</option>
+                                                <option key={0} value="">-</option>
                                                 {states.map((opt_state, index) => {
                                                     return (
                                                         <option key={index + 1} value={opt_state.id}>
