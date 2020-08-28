@@ -3,7 +3,6 @@ import React, { Component, Fragment } from "react"
 import { Graphviz } from "graphviz-react"
 // Local Imports
 import IEstado, { IOperacao } from "../../../models/Estado"
-import { log } from "console";
 
 interface IDfaResultProps {
     states: Array<IEstado>
@@ -37,13 +36,22 @@ class DfaResult extends Component<IDfaResultProps, IDfaResultState> {
 
     operacoesToDotString(state_id: string, operacoes: Array<IOperacao>): string {
         return operacoes.filter(operacao => operacao.next_state_id !== "").map(operacao => {
-            return `${state_id}->${operacao.next_state_id}[ label="${operacao.character}" ];`
-        }).join("")
+            return `"${state_id}" -> "${operacao.next_state_id}" [ label="${operacao.character}" ];`
+        }).join("\n")
     }
     statesToDotString(states: Array<IEstado>): string {
-        const states_id = states.map(state => {
-            return `${state.id};\n${this.operacoesToDotString(state.id, state.operacoes)}`;
+        let states_id = states.map(state => {
+            const label = state.final ? " [shape=doublecircle]" : " [shape=circle]"
+            return `"${state.id}"${label};\n${this.operacoesToDotString(state.id, state.operacoes)}`;
         }).join("\n")
+        const id_inicial = states.findIndex(inner_state => inner_state.inicial)
+
+        if (id_inicial !== -1) {
+            console.log(id_inicial);
+            states_id += `
+            "" [shape=none];
+            "" -> "${id_inicial}";`
+        }
         return (
             `digraph {
                 ${states_id}
@@ -114,51 +122,69 @@ class DfaResult extends Component<IDfaResultProps, IDfaResultState> {
         console.log(matrix_aux);
 
         const estados_visitados = new Array<string>();
-        const estados_minizados = new Array<{ new_id: string, old_ids: Array<string> }>();
-        for (let s = 0; s < unminified_states.length; s++) {
+        const estados_minizados = new Array<string>();
+        for (let s = unminified_states.length - 1; s >= 0; s--) {
             if (!estados_visitados.includes(unminified_states[s].id)) {
-                const estado_aux: IEstado = { ...unminified_states[s] }
                 estados_visitados.push(unminified_states[s].id)
+                const estado_aux: IEstado = { ...unminified_states[s] }
                 const matrix_index_g = matrix_aux.findIndex(inner_state => inner_state.id === unminified_states[s].id)
                 if (matrix_index_g !== -1) {
                     for (let w = 0; w < matrix_aux[matrix_index_g].cols.length; w++) {
                         if (matrix_aux[matrix_index_g].cols[w].valor === false) {
                             const matrix_index_z = unminified_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[w].id)
                             estados_visitados.push(unminified_states[matrix_index_z].id)
-                            estado_aux.id = `${estado_aux.id}${unminified_states[matrix_index_z].id}`
+                            estado_aux.id = `${estado_aux.id}_${unminified_states[matrix_index_z].id}`
                             estado_aux.inicial = estado_aux.inicial || unminified_states[matrix_index_z].inicial
+                            estado_aux.final = estado_aux.final || unminified_states[matrix_index_z].final
+                            // let remove_this_id = minified_states.findIndex(inner_state => inner_state.id === unminified_states[matrix_index_z].id);
+                            // if((remove_this_id === -1)){
+                            //     minified_states.splice(remove_this_id, 1)
+                            // }
                         }
                     }
                 }
+                estados_minizados.push(estado_aux.id)
                 minified_states.push(estado_aux);
             }
         }
-        return minified_states
+        for (let i = 0; i < minified_states.length; i++) {
+            const state = minified_states[i]
+            for (let j = 0; j < state.operacoes.length; j++) {
+                const operacao = state.operacoes[j]
+                if (operacao.next_state_id !== "") {
+                    if (!estados_minizados.includes(operacao.next_state_id)) {
+                        for (let k = 0; k < estados_minizados.length; k++) {
+                            if (estados_minizados[k].includes(operacao.next_state_id)) {
+                                minified_states[i].operacoes[j].next_state_id = estados_minizados[k]
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return minified_states.reverse()
     }
     render() {
         const { states } = this.props
-        const inner_states = [...states.map(inner_state => { return { ...inner_state } })]
+        const inner_states = [...states.map(inner_state => { return { ...inner_state, operacoes: [...inner_state.operacoes.map(oper => { return { ...oper } })] } })]
         let minified_states: Array<IEstado>;
         try {
             minified_states = this.minifyStates(inner_states)
 
         } catch (err) {
             console.error(err)
-            minified_states = inner_states
+            minified_states = states
 
         }
         console.log(states, inner_states, minified_states)
 
         const dot_string_min = this.statesToDotString(minified_states);
-        const dot_string = this.statesToDotString(inner_states);
+        // const dot_string = this.statesToDotString(inner_states);
         console.log(dot_string_min);
 
         return (
             <Fragment>
                 <p>Result should be here</p>
-                <Graphviz dot={
-                    dot_string
-                } />
                 <Graphviz dot={
                     dot_string_min
                 } />

@@ -122,12 +122,11 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
 
     onStateInicialChange(estado: IEstado) {
         return (event: ChangeEvent<HTMLInputElement>) => {
-            const value = event.target.value;
             this.setState(state => {
                 return {
                     ...state,
                     states: [
-                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, inicial: value ? true : false }),
+                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, inicial: !estado.inicial }),
                     ]
                 }
             })
@@ -135,12 +134,11 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
     }
     onStateFinalChange(estado: IEstado) {
         return (event: ChangeEvent<HTMLInputElement>) => {
-            const value = event.target.value;
             this.setState(state => {
                 return {
                     ...state,
                     states: [
-                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, final: value ? true : false }),
+                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, final: !estado.final }),
                     ]
                 }
             })
