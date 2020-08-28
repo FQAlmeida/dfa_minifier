@@ -58,16 +58,16 @@ class DfaTable extends Component<DfaTableProps> {
                                 })}
                                 <td>
                                     <InputGroup>
-                                        <FormCheck type="radio" name="inicial" aria-label="check-inicial" onChange={onStateInicialChange(state)} />
+                                        <FormCheck type="radio" name="inicial" aria-label="check-inicial" onChange={onStateInicialChange(state)} checked={state.inicial} />
                                     </InputGroup>
                                 </td>
                                 <td>
                                     <InputGroup>
-                                        <FormCheck type="checkbox" aria-label="check-final" onChange={onStateFinalChange(state)} />
+                                        <FormCheck type="checkbox" aria-label="check-final" onChange={onStateFinalChange(state)} checked={state.final} />
                                     </InputGroup>
                                 </td>
                                 <td>
-                                    <Button variant="outline-danger" onClick={onStateRemove(state)}><FcCancel /></Button>
+                                    <Button variant="outline-danger" onClick={onStateRemove(state)} ><FcCancel /></Button>
                                 </td>
                             </tr>
                         )

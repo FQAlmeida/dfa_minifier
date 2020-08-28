@@ -11,8 +11,8 @@ const initial_state: DfaMinifierState = {
     alphabet: "ab",
     states: [{
         id: "0",
-        inicial: false,
-        final: false,
+        inicial: true,
+        final: true,
         operacoes: [
             {
                 character: "a",
