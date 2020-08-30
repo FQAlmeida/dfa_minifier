@@ -126,7 +126,7 @@ class DfaMinifier extends Component<DfaMinifierProps, DfaMinifierState>{
                 return {
                     ...state,
                     states: [
-                        ...state.states.map(inner_state => inner_state.id !== estado.id ? inner_state : { ...estado, inicial: !estado.inicial }),
+                        ...state.states.map(inner_state => inner_state.id === estado.id ? {...inner_state, inicial: true} : {...inner_state, inicial: false}),
                     ]
                 }
             })

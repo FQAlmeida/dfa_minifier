@@ -50,7 +50,7 @@ class DfaResult extends Component<IDfaResultProps, IDfaResultState> {
             console.log(id_inicial);
             states_id += `
             "" [shape=none];
-            "" -> "${id_inicial}";`
+            "" -> "${states[id_inicial].id}";`
         }
         return (
             `digraph {
@@ -59,53 +59,101 @@ class DfaResult extends Component<IDfaResultProps, IDfaResultState> {
     }
     minifyStates(unminified_states: Array<IEstado>): Array<IEstado> {
         console.log("-------------------------------------------")
-        const minified_states: Array<IEstado> = new Array<IEstado>();
-        const matrix_aux: Array<linha_matriz_aux> = new Array<linha_matriz_aux>();
-        for (let i = 0; i < unminified_states.length - 1; i++) {
-            matrix_aux.push({ id: unminified_states[i + 1].id, cols: new Array<col_matriz_aux>() });
-            for (let j = 0; j < i + 1; j++) {
-                matrix_aux[i].cols.push({ id: unminified_states[j].id, valor: false, pares: new Array<par>() });
+
+        let bfs_queue: Array<IEstado> = new Array<IEstado>();
+        let reachable_states: Array<IEstado> = new Array<IEstado>();
+        let index_initial_state = unminified_states.findIndex(inner_state => inner_state.inicial === true)
+        reachable_states.push(unminified_states[index_initial_state])
+        
+        for(let i = 0; i < unminified_states[index_initial_state].operacoes.length; i++) {
+            if(unminified_states[index_initial_state].operacoes[i].next_state_id !== "") {
+                let index_next_state = unminified_states.findIndex(inner_state => inner_state.id === unminified_states[index_initial_state].operacoes[i].next_state_id)
+                if(!reachable_states.includes(unminified_states[index_next_state])) {
+                    reachable_states.push(unminified_states[index_next_state])
+                    bfs_queue.push(unminified_states[index_next_state])
+                }
             }
         }
-        for (let i = 1; i < unminified_states.length; i++) {
-            for (let j = 0; j < unminified_states.length; j++) {
-                if (unminified_states[i].final !== unminified_states[j].final) {
-                    let matrix_index_i = matrix_aux.findIndex(inner_state => inner_state.id === unminified_states[i].id)
-                    let matrix_index_j = matrix_aux[matrix_index_i].cols.findIndex(inner_state => inner_state.id === unminified_states[j].id)
+
+        while(bfs_queue.length > 0) {
+            let current_state = bfs_queue.pop()
+            let index_current_state = unminified_states.findIndex(inner_state => inner_state.id === current_state?.id)
+                for (let i=0; i < unminified_states[index_current_state].operacoes.length; i++) {
+                    if(unminified_states[index_current_state].operacoes[i].next_state_id !== "") {
+                        let index_next_state = unminified_states.findIndex(inner_state => inner_state.id === unminified_states[index_current_state].operacoes[i].next_state_id)
+                        if(!reachable_states.includes(unminified_states[index_next_state])) {
+                            reachable_states.push(unminified_states[index_next_state])
+                            bfs_queue.push(unminified_states[index_next_state])
+                        }
+                    }
+                }
+        }
+
+        reachable_states.sort((a,b) => parseInt(a.id) - parseInt(b.id))
+        const minified_states: Array<IEstado> = new Array<IEstado>();
+        const matrix_aux: Array<linha_matriz_aux> = new Array<linha_matriz_aux>();
+        for (let i = 0; i < reachable_states.length - 1; i++) {
+            matrix_aux.push({ id: reachable_states[i + 1].id, cols: new Array<col_matriz_aux>() });
+            for (let j = 0; j < i + 1; j++) {
+                matrix_aux[i].cols.push({ id: reachable_states[j].id, valor: false, pares: new Array<par>() });
+            }
+        }
+        console.log("Matriz Inicial:")
+        console.log("Linhas da Matriz Auxiliar:")
+        console.table(matrix_aux)
+
+        for(let i = 0; i < matrix_aux.length; i++) {
+            console.log("Elementos da Linha: " + i)
+            console.table(matrix_aux[i].cols)
+        }
+        console.log("-------------------------------------------")
+        for (let i = 1; i < reachable_states.length; i++) {
+            for (let j = 0; j < reachable_states.length; j++) {
+                if (reachable_states[i].final !== reachable_states[j].final) {
+                    let matrix_index_i = matrix_aux.findIndex(inner_state => inner_state.id === reachable_states[i].id)
+                    let matrix_index_j = matrix_aux[matrix_index_i].cols.findIndex(inner_state => inner_state.id === reachable_states[j].id)
                     if (matrix_index_j === -1 || matrix_index_i === -1) {
-                        matrix_index_i = matrix_aux.findIndex(inner_state => inner_state.id === unminified_states[j].id)
-                        matrix_index_j = matrix_aux[matrix_index_i].cols.findIndex(inner_state => inner_state.id === unminified_states[i].id)
+                        matrix_index_i = matrix_aux.findIndex(inner_state => inner_state.id === reachable_states[j].id)
+                        matrix_index_j = matrix_aux[matrix_index_i].cols.findIndex(inner_state => inner_state.id === reachable_states[i].id)
                     }
                     matrix_aux[matrix_index_i].cols[matrix_index_j].valor = true
                 }
             }
         }
+        console.log("Matriz Marcada <Final, Não-Final>:")
+        console.log("Linhas da Matriz Auxiliar:")
+        console.table(matrix_aux)
+
+        for(let i = 0; i < matrix_aux.length; i++) {
+            console.log("Elementos da Linha: " + i)
+            console.table(matrix_aux[i].cols)
+        }
+        console.log("-------------------------------------------")
         for (let i = 0; i < matrix_aux.length; i++) {
             for (let j = 0; j < matrix_aux[i].cols.length; j++) {
                 if (matrix_aux[i].cols[j].valor === false) {
-                    const state_index_i = unminified_states.findIndex(inner_state => inner_state.id === matrix_aux[i].id);
-                    const state_index_j = unminified_states.findIndex(inner_state => inner_state.id === matrix_aux[i].cols[j].id);
+                    const state_index_i = reachable_states.findIndex(inner_state => inner_state.id === matrix_aux[i].id);
+                    const state_index_j = reachable_states.findIndex(inner_state => inner_state.id === matrix_aux[i].cols[j].id);
 
-                    for (let v = 0; v < unminified_states[state_index_i].operacoes.length; v++) {
-                        if (unminified_states[state_index_i].operacoes[v].next_state_id !== "") {
-                            const oper_index_k = unminified_states[state_index_j].operacoes.findIndex(operacao => operacao.character === unminified_states[state_index_i].operacoes[v].character)
-                            const state_g_to_find = unminified_states[state_index_i].operacoes[v].next_state_id
+                    for (let v = 0; v < reachable_states[state_index_i].operacoes.length; v++) {
+                        if (reachable_states[state_index_i].operacoes[v].next_state_id !== "") {
+                            const oper_index_k = reachable_states[state_index_j].operacoes.findIndex(operacao => operacao.character === reachable_states[state_index_i].operacoes[v].character)
+                            const state_g_to_find = reachable_states[state_index_i].operacoes[v].next_state_id
                             let matrix_index_g = matrix_aux.findIndex(inner_state => inner_state.id === state_g_to_find)
-                            if (matrix_index_g !== -1 && unminified_states[state_index_j].operacoes[oper_index_k].next_state_id !== "") {
-                                const state_h_to_find = unminified_states[state_index_j].operacoes[oper_index_k].next_state_id
+                            if (matrix_index_g !== -1 && reachable_states[state_index_j].operacoes[oper_index_k].next_state_id !== "") {
+                                const state_h_to_find = reachable_states[state_index_j].operacoes[oper_index_k].next_state_id
                                 if (state_h_to_find !== state_g_to_find) {
                                     let matrix_index_h = matrix_aux[matrix_index_g].cols.findIndex(inner_state => inner_state.id === state_h_to_find)
                                     if (matrix_index_h === -1) {
                                         matrix_index_g = matrix_aux.findIndex(inner_state => inner_state.id === state_h_to_find)
                                         matrix_index_h = matrix_aux[matrix_index_g].cols.findIndex(inner_state => inner_state.id === state_g_to_find)
                                     }
-                                    console.log(i, j, matrix_index_g, matrix_index_h);
 
                                     if (matrix_aux[matrix_index_g].cols[matrix_index_h].valor) {
                                         matrix_aux[i].cols[j].valor = true;
                                         for (let t = 0; t < matrix_aux[matrix_index_g].cols[matrix_index_h].pares.length; t++) {
-                                            const state_index_u = unminified_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[matrix_index_h].pares[t].estado_x);
-                                            const state_index_p = unminified_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[matrix_index_h].pares[t].estado_y);
+                                            const state_index_u = reachable_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[matrix_index_h].pares[t].estado_x);
+                                            const state_index_p = reachable_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[matrix_index_h].pares[t].estado_y);
                                             matrix_aux[state_index_u].cols[state_index_p].valor = true
                                         }
                                         break
@@ -119,27 +167,31 @@ class DfaResult extends Component<IDfaResultProps, IDfaResultState> {
                 }
             }
         }
-        console.log(matrix_aux);
+        console.log("Matriz Final:")
+        console.log("Linhas da Matriz Auxiliar:")
+        console.table(matrix_aux)
+
+        for(let i = 0; i < matrix_aux.length; i++) {
+            console.log("Elementos da Linha: " + i)
+            console.table(matrix_aux[i].cols)
+        }
+        console.log("-------------------------------------------")
 
         const estados_visitados = new Array<string>();
         const estados_minizados = new Array<string>();
-        for (let s = unminified_states.length - 1; s >= 0; s--) {
-            if (!estados_visitados.includes(unminified_states[s].id)) {
-                estados_visitados.push(unminified_states[s].id)
-                const estado_aux: IEstado = { ...unminified_states[s] }
-                const matrix_index_g = matrix_aux.findIndex(inner_state => inner_state.id === unminified_states[s].id)
+        for (let s = reachable_states.length - 1; s >= 0; s--) {
+            if (!estados_visitados.includes(reachable_states[s].id)) {
+                estados_visitados.push(reachable_states[s].id)
+                const estado_aux: IEstado = { ...reachable_states[s] }
+                const matrix_index_g = matrix_aux.findIndex(inner_state => inner_state.id === reachable_states[s].id)
                 if (matrix_index_g !== -1) {
                     for (let w = 0; w < matrix_aux[matrix_index_g].cols.length; w++) {
                         if (matrix_aux[matrix_index_g].cols[w].valor === false) {
-                            const matrix_index_z = unminified_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[w].id)
-                            estados_visitados.push(unminified_states[matrix_index_z].id)
-                            estado_aux.id = `${estado_aux.id}_${unminified_states[matrix_index_z].id}`
-                            estado_aux.inicial = estado_aux.inicial || unminified_states[matrix_index_z].inicial
-                            estado_aux.final = estado_aux.final || unminified_states[matrix_index_z].final
-                            // let remove_this_id = minified_states.findIndex(inner_state => inner_state.id === unminified_states[matrix_index_z].id);
-                            // if((remove_this_id === -1)){
-                            //     minified_states.splice(remove_this_id, 1)
-                            // }
+                            const matrix_index_z = reachable_states.findIndex(inner_state => inner_state.id === matrix_aux[matrix_index_g].cols[w].id)
+                            estados_visitados.push(reachable_states[matrix_index_z].id)
+                            estado_aux.id = `${estado_aux.id}_${reachable_states[matrix_index_z].id}`
+                            estado_aux.inicial = estado_aux.inicial || reachable_states[matrix_index_z].inicial
+                            estado_aux.final = estado_aux.final || reachable_states[matrix_index_z].final
                         }
                     }
                 }
@@ -176,11 +228,9 @@ class DfaResult extends Component<IDfaResultProps, IDfaResultState> {
             minified_states = states
 
         }
-        console.log(states, inner_states, minified_states)
 
         const dot_string_min = this.statesToDotString(minified_states);
         // const dot_string = this.statesToDotString(inner_states);
-        console.log(dot_string_min);
 
         return (
             <Fragment>
